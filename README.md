@@ -127,4 +127,4 @@ python -m pytest -v --tb=short
 
 ## Blog post
 
-https://dev.to/meseret_akalu_1743b6f6aa5/hng-stage-3-api-automation
+[https://dev.to/meseret_akalu_1743b6f6aa5/hng-stage-3-api-automation](https://dev.to/meseret_akalu_1743b6f6aa5/api-automation-zedu-platform-38ih)
