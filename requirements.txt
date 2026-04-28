@@ -1,4 +1,0 @@
-pytest==9.0.3
-requests==2.32.5
-python-dotenv==1.2.2
-faker==40.15.0

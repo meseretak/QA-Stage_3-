@@ -1,39 +1,37 @@
-# HNG Stage 3 — API Automation (Zedu Platform)
+# HNG Stage 3 — API Test Automation (Zedu)
 
-Automated test suite for the [Zedu](https://zedu.chat) API built with Python and Pytest.
-79 test cases across 4 files covering authentication, user profiles, logout, and profile management.
+This is my API automation project for HNG Stage 3. I tested the Zedu platform API using Python and Pytest. The suite covers login, registration, logout, and user profile endpoints — 30 tests in total.
 
-**System under test:** `https://api.zedu.chat/api/v1`
+**API being tested:** `https://api.zedu.chat/api/v1`
 
 ---
 
-## Project structure
+## What's in the project
 
 ```
 hng-stage3-qa/
 ├── tests/
-│   ├── test_auth.py                  # Login & register (positive, negative, edge cases)
-│   ├── test_users.py                 # User profile endpoints
-│   ├── test_logout.py                # Logout & token invalidation
-│   └── test_profile_management.py   # Profile update, user search
+│   ├── test_auth.py       # login and register tests
+│   ├── test_users.py      # user profile tests
+│   └── test_logout.py     # logout tests
 ├── utils/
-│   └── auth.py             # Shared login utility — single source of truth for tokens
-├── conftest.py             # Pytest fixtures (tokens, headers, unique data generators)
-├── .env.example            # Environment variable template
-├── requirements.txt        # Pinned dependencies
+│   └── auth.py            # handles login and token retrieval
+├── conftest.py            # shared fixtures used across all tests
+├── .env.example           # template for environment variables
+├── requirements.txt       # dependencies
 └── README.md
 ```
 
 ---
 
-## Prerequisites
+## Requirements
 
-- Python **3.10 or higher**
+- Python 3.10 or higher
 - pip
 
 ---
 
-## Setup
+## How to set it up
 
 **1. Clone the repo**
 
@@ -46,8 +44,8 @@ cd hng-stage3-qa
 
 ```bash
 python -m venv venv
-source venv/bin/activate        # Linux / macOS
-venv\Scripts\activate           # Windows
+source venv/bin/activate      # Mac/Linux
+venv\Scripts\activate         # Windows
 ```
 
 **3. Install dependencies**
@@ -56,75 +54,62 @@ venv\Scripts\activate           # Windows
 pip install -r requirements.txt
 ```
 
-**4. Configure environment variables**
-
-Copy the example and fill in your credentials:
+**4. Create your .env file**
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and set these three values:
+Then open `.env` and fill in your details:
 
 ```
 BASE_URL=https://api.zedu.chat/api/v1
-TEST_EMAIL=your_registered_zedu_email@example.com
+TEST_EMAIL=your_zedu_email@example.com
 TEST_PASSWORD=your_zedu_password
+TEST_REGISTER_PASSWORD=password_for_new_test_users
 ```
 
-> The `.env` file is gitignored and must never be committed to the repository.
+The `.env` file is in `.gitignore` so it won't be pushed to GitHub.
 
 ---
 
 ## Running the tests
 
-Run the full suite:
+Run everything:
 
 ```bash
 python -m pytest -v
 ```
 
-Run a specific file:
+Run one file at a time:
 
 ```bash
 python -m pytest tests/test_auth.py -v
 python -m pytest tests/test_users.py -v
 python -m pytest tests/test_logout.py -v
-python -m pytest tests/test_profile_management.py -v
-```
-
-Run with a short summary:
-
-```bash
-python -m pytest -v --tb=short
 ```
 
 ---
 
-## Test file overview
+## What each file tests
 
-| File | Tests | What it covers |
-|------|-------|----------------|
-| `tests/test_auth.py` | 31 | POST /auth/login (positive + negative), POST /auth/register (positive + negative), 6 edge cases. Validates status codes, token format, response schema, error messages, field presence and types. |
-| `tests/test_users.py` | 23 | GET /users, GET /users/me, GET /users/profile — authenticated and unauthenticated scenarios. Validates email field presence, data types, security (no password exposure), error messages. |
-| `tests/test_logout.py` | 7 | POST /auth/logout — valid token, no token, malformed token, fake JWT, token invalidation after logout. |
-| `tests/test_profile_management.py` | 18 | PUT /users/me (update profile), GET /users/search — positive, negative, and edge cases including XSS, SQL injection, and oversized inputs. |
+**test_auth.py** — 20 tests covering login and register. Includes happy path tests (valid login, successful registration), negative tests (wrong password, missing fields, invalid email format, SQL injection), and edge cases (null values, very long password, XSS in name field, whitespace in email).
 
-**Totals: 79 tests — 28 negative, 11 edge cases, 40 positive**
+**test_users.py** — 5 tests covering the user profile endpoints. Checks that authenticated requests work, that the response contains the right email, that passwords are never exposed, and that unauthenticated requests are properly rejected.
+
+**test_logout.py** — 5 tests covering logout. Verifies that logout works with a valid token, that the token stops working after logout, and that bad/missing tokens are rejected.
 
 ---
 
-## Key design decisions
+## How I handled authentication
 
-- **No hardcoded tokens or credentials.** All values come from `.env` via `python-dotenv`.
-- **Single login utility.** `utils/auth.py` is the only place login logic lives. All fixtures call it.
-- **Session vs function scope.** The `auth_headers` fixture is session-scoped (login once). Logout tests use `fresh_token` / `fresh_auth_headers` (function-scoped) so they don't invalidate the shared session token.
-- **Dynamic data.** Registration tests use `Faker` + UUID to generate unique emails and names on every run — fully idempotent.
-- **Independent tests.** No test depends on another running first. Each sets up its own state.
-- **Rich assertions.** Every test validates at minimum: status code, response schema, field presence, data types, and error messages.
+All tokens are fetched at runtime by calling the login API — nothing is hardcoded. The `utils/auth.py` file has a single `get_token()` function that everything uses. Tests that need a token get it through fixtures in `conftest.py`.
+
+For logout tests I use a separate `fresh_token` fixture so each test gets its own token and doesn't affect the shared session.
 
 ---
 
 ## Blog post
 
-[https://dev.to/meseret_akalu_1743b6f6aa5/hng-stage-3-api-automation](https://dev.to/meseret_akalu_1743b6f6aa5/api-automation-zedu-platform-38ih)
+https://dev.to/meseret_akalu_1743b6f6aa5/api-automation-zedu-platform-38ih
+
