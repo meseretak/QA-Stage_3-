@@ -396,7 +396,7 @@ def test_register_missing_email_returns_422_with_field_error():
     Validates: status code, field presence, data types, field values,
                error message, schema.
     """
-    r = _register({"password": "Test@1234!", "first_name": "Test", "last_name": "User"})
+    r = _register({"password": os.getenv("TEST_REGISTER_PASSWORD"), "first_name": "Test", "last_name": "User"})
 
     # 1. Status code
     assert r.status_code in (400, 422)

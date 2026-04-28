@@ -17,7 +17,7 @@ fake = Faker()
 def base_url():
     """Base API URL loaded from environment — never hardcoded."""
     url = os.getenv("BASE_URL")
-    assert url, "BASE_URL must be set in .env"
+    assert url, "added in the .env"
     return url
 
 
@@ -60,7 +60,7 @@ def unique_user():
     uid = fake.uuid4()[:8]
     return {
         "email": f"qa_{uid}@mailtest.dev",
-        "password": "Test@1234!",
+        "password": os.getenv("TEST_REGISTER_PASSWORD"),
         "first_name": fake.first_name(),
         "last_name": fake.last_name(),
         "username": f"qa_{uid}_{fake.user_name()[:8]}",
