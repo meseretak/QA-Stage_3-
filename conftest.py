@@ -1,11 +1,12 @@
 """
-conftest.py — shared fixtures for all tests.
+conftest.py — shared pytest fixtures used across all test files.
+Login logic lives here (and in utils/auth.py) — never duplicated in test files.
 """
 import os
 import pytest
 from dotenv import load_dotenv
 from faker import Faker
-from utils.auth import get_token, auth_headers
+from utils.auth import get_token
 
 load_dotenv()
 
@@ -14,34 +15,53 @@ fake = Faker()
 
 @pytest.fixture(scope="session")
 def base_url():
-    return os.getenv("BASE_URL", "https://api.zedu.chat/api/v1")
+    """Base API URL loaded from environment — never hardcoded."""
+    url = os.getenv("BASE_URL")
+    assert url, "BASE_URL must be set in .env"
+    return url
 
 
 @pytest.fixture(scope="session")
-def token():
-    """Session-scoped token — login once, reuse across all tests."""
+def valid_token(base_url):
+    """
+    Session-scoped token obtained by logging in once.
+    Shared across all tests that need authentication.
+    """
     return get_token()
 
 
 @pytest.fixture(scope="session")
-def headers(token):
-    """Session-scoped auth headers."""
-    return {"Authorization": f"Bearer {token}"}
+def auth_headers(valid_token):
+    """Session-scoped Authorization header dict."""
+    return {"Authorization": f"Bearer {valid_token}"}
 
 
 @pytest.fixture
-def unique_email():
-    """Fresh unique email for each test that needs registration."""
-    return f"qa_{fake.uuid4()[:8]}@mailtest.dev"
+def fresh_token():
+    """
+    Function-scoped token — used by tests that consume/invalidate the token
+    (e.g. logout tests) so they don't break the session token.
+    """
+    return get_token()
+
+
+@pytest.fixture
+def fresh_auth_headers(fresh_token):
+    """Function-scoped auth headers for tests that need a disposable token."""
+    return {"Authorization": f"Bearer {fresh_token}"}
 
 
 @pytest.fixture
 def unique_user():
-    """Full unique user payload."""
+    """
+    Generates a completely unique user payload on every call.
+    Ensures registration tests are idempotent and independent.
+    """
+    uid = fake.uuid4()[:8]
     return {
-        "email": f"qa_{fake.uuid4()[:8]}@mailtest.dev",
+        "email": f"qa_{uid}@mailtest.dev",
         "password": "Test@1234!",
         "first_name": fake.first_name(),
         "last_name": fake.last_name(),
-        "username": fake.user_name() + fake.uuid4()[:5],
+        "username": f"qa_{uid}_{fake.user_name()[:8]}",
     }
